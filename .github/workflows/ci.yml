@@ -1,0 +1,111 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  GO_VERSION: "1.23"
+  BUF_VERSION: "1.47.2"
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          args: --timeout=5m
+          working-directory: .
+
+  proto:
+    name: Proto
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: bufbuild/buf-action@v1
+        with:
+          version: ${{ env.BUF_VERSION }}
+          lint: true
+          breaking: true
+          breaking_against: "https://github.com/cnylum/Accrue-engine.git#branch=main"
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: accrue
+          POSTGRES_PASSWORD: accrue
+          POSTGRES_DB: accrue_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Test all services
+        env:
+          DATABASE_URL: postgres://accrue:accrue@localhost:5432/accrue_test?sslmode=disable
+        run: |
+          for svc in services/*/; do
+            echo "=== Testing ${svc} ==="
+            cd "$svc"
+            go test ./... -race -count=1 -v
+            cd "$GITHUB_WORKSPACE"
+          done
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Build all services
+        run: |
+          for svc in services/*/; do
+            echo "=== Building ${svc} ==="
+            cd "$svc"
+            go build ./cmd/...
+            cd "$GITHUB_WORKSPACE"
+          done
+
+  docker:
+    name: Docker
+    runs-on: ubuntu-latest
+    needs: [lint, test, build]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker images
+        run: |
+          for svc in services/*/; do
+            name=$(basename "$svc")
+            echo "=== Building accrue-${name} ==="
+            docker build -t "accrue-${name}:ci" "$svc"
+          done
