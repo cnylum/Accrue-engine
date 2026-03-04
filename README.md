@@ -19,7 +19,18 @@ Companies deploy Accrue under their own brand and licenses. Plug in your broker,
 docker-compose up
 ```
 
-> Not yet available — engine is under active development.
+## SDK
+
+Use the Go SDK to integrate with Accrue from any language:
+
+```go
+import "github.com/cnylum/accrue-engine/sdk/client"
+
+c := client.New(client.Config{BaseURL: "http://localhost:8080", APIKey: "your-key"})
+order, err := c.PlaceOrder(ctx, types.PlaceOrderRequest{Symbol: "AAPL", Side: "buy", OrderType: "market", Quantity: "10"})
+```
+
+Also available as a **C shared library** (`.so`/`.dylib`) and **WASM module** for non-Go environments. See `sdk/` for details.
 
 ## Architecture
 
@@ -49,7 +60,7 @@ Adapters are plugins. Accrue ships with a mock adapter for development. Real bro
 
 **Phase 1 — Engine Core** (in progress)
 
-- [ ] Project scaffolding
+- [x] Project scaffolding
 - [ ] Broker adapter interface
 - [ ] Mock adapter (paper trading)
 - [ ] Portfolio engine

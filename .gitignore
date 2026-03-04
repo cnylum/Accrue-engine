@@ -36,3 +36,10 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+
+# Generated protobuf code
+/gen/go/*/
+
+# SDK build artifacts
+*.wasm
+libaccrue.*

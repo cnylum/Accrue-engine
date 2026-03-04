@@ -126,6 +126,20 @@ accrue-engine/
 │       ├── Dockerfile
 │       └── go.mod
 │
+├── gen/go/                      # generated protobuf Go code (shared)
+│
+├── sdk/                         # Client SDK (Go, CGo, WASM)
+│   ├── client/                  # Pure Go client library
+│   │   ├── client.go
+│   │   ├── trading.go
+│   │   ├── portfolio.go
+│   │   ├── account.go
+│   │   └── http/               # HTTP transport
+│   ├── types/                  # Domain types
+│   ├── sharedlib/              # CGo shared library target
+│   ├── wasm/                   # WebAssembly target
+│   └── go.mod
+│
 ├── pkg/                         # shared Go packages (minimal)
 │   └── id/                      # UUID generation helpers
 │
@@ -135,7 +149,7 @@ accrue-engine/
 │   └── adapter/
 │
 ├── docker-compose.yml           # all services + postgres
-├── Makefile                     # build, test, proto-gen, docker targets
+├── Makefile                     # build, test, proto-gen, docker, sdk-build
 ├── go.work                      # Go workspace file linking all modules
 ├── buf.yaml                     # protobuf tooling config
 ├── README.md
@@ -159,7 +173,7 @@ accrue-engine/
 - Use [buf](https://buf.build/) for linting, breaking change detection, and code generation
 - Proto files in `proto/<service>/v1/`
 - Version all proto packages (v1, v2)
-- Generated Go code goes into each service's internal `gen/` directory
+- Generated Go code goes into `gen/go/` at the repo root (shared across services)
 - Keep proto definitions minimal — don't leak implementation details into contracts
 
 ## Database Conventions
@@ -196,11 +210,20 @@ accrue-engine/
 - **Branch:** `main`
 - Commit messages: imperative mood, concise. "Add broker adapter interface", not "Added broker adapter interface"
 
+## SDK
+
+The SDK lives in `sdk/` inside this repo. Three build targets:
+
+- **Go library:** `go get github.com/cnylum/accrue-engine/sdk` — import directly
+- **Shared library:** `go build -buildmode=c-shared` → `.so`/`.dylib`/`.dll` + `.h` header (for Python, Ruby, etc.)
+- **WASM:** `GOOS=js GOARCH=wasm go build` → `.wasm` module (for browser/Node.js)
+
+`client/` holds all logic. `sharedlib/` and `wasm/` are thin FFI adapters. Build with `make sdk-build`.
+
 ## Related Repos
 
 - **[accrue-business](https://github.com/cnylum/accrue-business)** — strategy, roadmap, research, content
 - **accrue-ui** (future) — reference React frontend
-- **accrue-sdk** (future) — client SDKs
 
 ## What Not To Do
 

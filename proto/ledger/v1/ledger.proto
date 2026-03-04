@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package ledger.v1;
+
+option go_package = "github.com/cnylum/accrue-engine/gen/go/ledger/v1;ledgerv1";
+
+import "common/v1/types.proto";
+
+service LedgerService {
+  rpc Credit(CreditRequest) returns (CreditResponse);
+  rpc Debit(DebitRequest) returns (DebitResponse);
+  rpc GetBalance(GetBalanceRequest) returns (GetBalanceResponse);
+  rpc PlaceHold(PlaceHoldRequest) returns (PlaceHoldResponse);
+  rpc ReleaseHold(ReleaseHoldRequest) returns (ReleaseHoldResponse);
+}
+
+message CreditRequest {
+  string account_id = 1;
+  common.v1.Money amount = 2;
+  string reference = 3;
+}
+
+message CreditResponse {
+  string entry_id = 1;
+  common.v1.Money balance = 2;
+}
+
+message DebitRequest {
+  string account_id = 1;
+  common.v1.Money amount = 2;
+  string reference = 3;
+}
+
+message DebitResponse {
+  string entry_id = 1;
+  common.v1.Money balance = 2;
+}
+
+message GetBalanceRequest {
+  string account_id = 1;
+}
+
+message GetBalanceResponse {
+  common.v1.Money available = 1;
+  common.v1.Money held = 2;
+  common.v1.Money total = 3;
+}
+
+message PlaceHoldRequest {
+  string account_id = 1;
+  common.v1.Money amount = 2;
+  string reference = 3;
+}
+
+message PlaceHoldResponse {
+  string hold_id = 1;
+}
+
+message ReleaseHoldRequest {
+  string account_id = 1;
+  string hold_id = 2;
+}
+
+message ReleaseHoldResponse {
+  bool released = 1;
+}
