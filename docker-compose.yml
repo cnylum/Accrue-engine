@@ -1,0 +1,65 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: accrue
+      POSTGRES_PASSWORD: accrue
+      POSTGRES_DB: accrue
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U accrue"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  gateway:
+    build: services/gateway
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: "8080"
+      ADAPTER_ADDR: "adapter:9001"
+      PORTFOLIO_ADDR: "portfolio:9002"
+      LEDGER_ADDR: "ledger:9003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  adapter:
+    build: services/adapter
+    ports:
+      - "9001:9001"
+    environment:
+      PORT: "9001"
+      DATABASE_URL: "postgres://accrue:accrue@postgres:5432/accrue?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  portfolio:
+    build: services/portfolio
+    ports:
+      - "9002:9002"
+    environment:
+      PORT: "9002"
+      DATABASE_URL: "postgres://accrue:accrue@postgres:5432/accrue?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  ledger:
+    build: services/ledger
+    ports:
+      - "9003:9003"
+    environment:
+      PORT: "9003"
+      DATABASE_URL: "postgres://accrue:accrue@postgres:5432/accrue?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:

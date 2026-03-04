@@ -1,0 +1,40 @@
+syntax = "proto3";
+
+package portfolio.v1;
+
+option go_package = "github.com/cnylum/accrue-engine/gen/go/portfolio/v1;portfoliov1";
+
+import "common/v1/types.proto";
+
+service PortfolioService {
+  rpc GetPositions(GetPositionsRequest) returns (GetPositionsResponse);
+  rpc GetPerformance(GetPerformanceRequest) returns (GetPerformanceResponse);
+}
+
+message Position {
+  string symbol = 1;
+  common.v1.AssetType asset_type = 2;
+  string quantity = 3;
+  string cost_basis = 4;
+  string market_value = 5;
+  string unrealized_pnl = 6;
+}
+
+message GetPositionsRequest {
+  string account_id = 1;
+}
+
+message GetPositionsResponse {
+  repeated Position positions = 1;
+}
+
+message GetPerformanceRequest {
+  string account_id = 1;
+}
+
+message GetPerformanceResponse {
+  string total_value = 1;
+  string total_cost = 2;
+  string total_pnl = 3;
+  string return_pct = 4;
+}
